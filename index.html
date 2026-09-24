@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="基于天气和时间条件估计首尔共享单车每小时租借量。">
+  <title>RideCast｜共享单车需求估计器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#predictor">跳到预测表单</a>
+
+  <header class="site-header" id="top">
+    <nav class="nav-shell" aria-label="主导航">
+      <a class="brand" href="#top" aria-label="RideCast 首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48"><path d="M9 29a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm30 0a8 8 0 1 0 0 16 8 8 0 0 0 0-16ZM15 14h9l5 15H17l7-10m5 10 5-15h6"/></svg>
+        </span>
+        <span>RIDECAST</span>
+      </a>
+      <div class="nav-links">
+        <a href="#how">模型流程</a>
+        <a href="#predictor">在线估计</a>
+        <a href="#limits">数据与局限</a>
+      </div>
+      <a class="nav-cta" href="#predictor">开始估计</a>
+      <button class="menu-button" type="button" aria-label="打开菜单" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero section-shell" aria-labelledby="hero-title">
+      <div class="hero-copy" data-reveal>
+        <div class="eyebrow"><span class="status-dot"></span>第 15 组 · 回归模型项目</div>
+        <h1 id="hero-title">下一小时，<br>会有多少人<br><em>骑上单车？</em></h1>
+        <p class="hero-lede">输入时间与天气条件，让训练好的模型从 8,760 条历史记录中估计每小时共享单车租借量。</p>
+        <div class="hero-actions">
+          <a class="button button-secondary" href="#how">了解模型</a>
+          <a class="button button-primary" href="#predictor">立即预测 <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="hero-meta" aria-label="项目摘要">
+          <span><strong>8,760</strong> 小时记录</span>
+          <span><strong>80 / 20</strong> 时间划分</span>
+          <span><strong>MAE + R²</strong> 评价</span>
+        </div>
+      </div>
+
+      <div class="hero-stage" aria-label="共享单车需求预测示意图" data-reveal data-reveal-delay="120">
+        <div class="orb orb-one"></div>
+        <div class="orb orb-two"></div>
+        <div class="forecast-window">
+          <div class="window-top">
+            <div class="window-dots"><i></i><i></i><i></i></div>
+            <span>需求监测面板</span>
+            <span class="live-pill"><i></i> LIVE</span>
+          </div>
+          <div class="metric-row">
+            <div><span>预计租借量</span><strong>742</strong><small>辆 / 小时</small></div>
+            <div class="trend"><span>较上小时</span><strong>+18%</strong><small>晚高峰上升</small></div>
+          </div>
+          <div class="chart" aria-hidden="true">
+            <svg viewBox="0 0 480 190" preserveAspectRatio="none">
+              <defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8891f2" stop-opacity=".44"/><stop offset="1" stop-color="#8891f2" stop-opacity="0"/></linearGradient></defs>
+              <path class="grid-line" d="M0 35H480M0 90H480M0 145H480"/>
+              <path class="chart-area" d="M0 158 C45 145 75 164 112 126 S170 72 205 105 S270 136 305 82 S356 26 391 53 S434 90 480 27 V190 H0Z"/>
+              <path class="chart-line" d="M0 158 C45 145 75 164 112 126 S170 72 205 105 S270 136 305 82 S356 26 391 53 S434 90 480 27"/>
+            </svg>
+            <div class="chart-labels"><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+          </div>
+        </div>
+        <div class="weather-chip chip-sun"><span>☀</span><b>18°C</b><small>体感舒适</small></div>
+        <div class="weather-chip chip-rain"><span>☂</span><b>0 mm</b><small>无降雨</small></div>
+        <div class="bike-art" aria-hidden="true">
+          <i class="wheel wheel-left"></i><i class="wheel wheel-right"></i>
+          <i class="bike-frame frame-one"></i><i class="bike-frame frame-two"></i><i class="bike-frame frame-three"></i>
+          <i class="seat"></i><i class="handle"></i>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="数据来源说明">
+      <p>DATA SOURCE</p>
+      <strong>UCI · SEOUL BIKE SHARING DEMAND</strong>
+      <span>逐小时天气与租借记录</span>
+    </section>
+
+    <section class="feature-section section-shell" id="how" aria-labelledby="how-title">
+      <div class="section-heading" data-reveal>
+        <span class="eyebrow eyebrow-simple">从数据到答案</span>
+        <h2 id="how-title">不是猜测，<br>是完整的预测流程。</h2>
+        <p>预处理、模型与网页推断使用同一条 Pipeline，避免训练和线上输入处理不一致。</p>
+      </div>
+
+      <article class="feature-card feature-purple" data-reveal>
+        <div class="mock-panel pipeline-panel" aria-hidden="true">
+          <div class="pipeline-tag">INPUT</div>
+          <div class="pipeline-node"><span>01</span><div><b>时间与天气</b><small>小时 · 温度 · 湿度 · 降雨</small></div></div>
+          <div class="pipeline-line"></div>
+          <div class="pipeline-node"><span>02</span><div><b>统一预处理</b><small>填补 · 编码 · 标准化</small></div></div>
+          <div class="pipeline-line"></div>
+          <div class="pipeline-node active"><span>03</span><div><b>线性回归</b><small>后端实时调用模型</small></div></div>
+        </div>
+        <div class="feature-copy">
+          <span class="card-index">01 / PIPELINE</span>
+          <h3>一条流水线，<br>从训练走到网页。</h3>
+          <p>所有缺失填补、类别编码和标准化只在训练数据上拟合。保存完整 Pipeline 后，网页预测直接复用同一套处理。</p>
+        </div>
+      </article>
+
+      <article class="feature-card feature-green" data-reveal>
+        <div class="feature-copy">
+          <span class="card-index">02 / TIME SPLIT</span>
+          <h3>过去训练，<br>未来检验。</h3>
+          <p>记录按日期与小时排序，前 80% 用于训练，后 20% 作为最终测试。模型选择只在训练段内部完成。</p>
+        </div>
+        <div class="timeline-panel" aria-hidden="true">
+          <div class="timeline-labels"><span>过去</span><span>切分点</span><span>未来</span></div>
+          <div class="timeline-bar"><i class="train-bar"></i><i class="test-bar"></i></div>
+          <div class="timeline-values"><span><b>80%</b> 训练集</span><span><b>20%</b> 测试集</span></div>
+          <div class="calendar-grid">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-card feature-blue" data-reveal>
+        <div class="score-panel" aria-hidden="true">
+          <div class="score-ring"><strong>MAE</strong><span>辆 / 小时</span></div>
+          <div class="score-bars">
+            <span><i style="--w:88%"></i><b>实际值</b></span>
+            <span><i style="--w:79%"></i><b>预测值</b></span>
+            <span><i style="--w:54%"></i><b>均值基线</b></span>
+          </div>
+        </div>
+        <div class="feature-copy">
+          <span class="card-index">03 / EVALUATION</span>
+          <h3>不只给答案，<br>也说明误差。</h3>
+          <p>最终报告测试集 MAE 与 R²，并展示实际值—预测值散点图、均值基线和误差最大的测试样本。</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="predictor-wrap" id="predictor" aria-labelledby="predictor-title">
+      <div class="predictor-heading section-shell" data-reveal>
+        <span class="eyebrow eyebrow-simple">试一试</span>
+        <h2 id="predictor-title">输入这一小时的条件。</h2>
+        <p>单位和范围均与训练数据保持一致。带 * 的字段为必填项。</p>
+      </div>
+
+      <div class="predictor-card section-shell" data-reveal>
+        <form id="prediction-form" novalidate>
+          <div class="form-group group-time">
+            <div class="group-title"><span>01</span><div><h3>时间信息</h3><p>模型会从日期提取月份与星期。</p></div></div>
+            <div class="fields-grid">
+              <label class="field"><span>日期 *</span><input name="date" type="date" value="2026-09-22" required></label>
+              <label class="field"><span>小时 *</span><select name="hour" required><option value="8">08:00</option><option value="12">12:00</option><option value="17" selected>17:00</option><option value="18">18:00</option><option value="22">22:00</option></select></label>
+              <label class="field"><span>是否节假日 *</span><select name="holiday" required><option value="No Holiday" selected>否</option><option value="Holiday">是</option></select></label>
+              <label class="field"><span>系统是否运行 *</span><select name="functioning_day" required><option value="Yes" selected>运行</option><option value="No">暂停</option></select></label>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-group group-weather">
+            <div class="group-title"><span>02</span><div><h3>天气信息</h3><p>请使用当小时观测或天气预报值。</p></div></div>
+            <div class="fields-grid">
+              <label class="field"><span>温度 * <small>°C</small></span><input name="temperature" type="number" value="18" min="-25" max="45" step="0.1" required></label>
+              <label class="field"><span>湿度 * <small>%</small></span><input name="humidity" type="number" value="55" min="0" max="100" step="1" required></label>
+              <label class="field"><span>降雨量 * <small>mm</small></span><input name="rainfall" type="number" value="0" min="0" max="50" step="0.1" required></label>
+              <label class="field"><span>降雪量 * <small>cm</small></span><input name="snowfall" type="number" value="0" min="0" max="10" step="0.1" required></label>
+            </div>
+          </div>
+
+          <div id="form-error" class="form-error" role="alert" aria-live="polite"></div>
+          <button class="button button-primary submit-button" type="submit"><span>估计租借需求</span><span aria-hidden="true">→</span></button>
+        </form>
+
+        <aside class="result-card" id="prediction-result" aria-live="polite">
+          <div class="result-empty">
+            <div class="result-icon" aria-hidden="true">↗</div>
+            <span>等待输入</span>
+            <h3>你的预测结果<br>会出现在这里。</h3>
+            <p>提交后，后端将使用已保存的模型完成真实推断。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="limits section-shell" id="limits" aria-labelledby="limits-title" data-reveal>
+      <div class="limits-copy">
+        <span class="eyebrow eyebrow-simple">模型边界</span>
+        <h2 id="limits-title">知道它擅长什么，<br>也知道它不知道什么。</h2>
+      </div>
+      <div class="limit-list">
+        <article><span>01</span><div><h3>城市与时间范围</h3><p>数据来自首尔，不能直接代表其他城市、新站点或长期变化后的需求。</p></div></article>
+        <article><span>02</span><div><h3>突发事件</h3><p>模型没有大型活动、道路施工和公共交通故障等变量，异常日误差可能更大。</p></div></article>
+        <article><span>03</span><div><h3>极端天气</h3><p>超出训练数据范围的温度、暴雨或暴雪属于外推，结果只能作为参考。</p></div></article>
+      </div>
+    </section>
+
+    <section class="final-cta section-shell" data-reveal>
+      <div>
+        <span>READY TO RIDE?</span>
+        <h2>把天气，变成可解释的需求预测。</h2>
+      </div>
+      <a class="button button-secondary" href="#predictor">返回估计器 ↑</a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-shell">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M9 29a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm30 0a8 8 0 1 0 0 16 8 8 0 0 0 0-16ZM15 14h9l5 15H17l7-10m5 10 5-15h6"/></svg></span><span>RIDECAST</span></a>
+      <div class="footer-column"><b>项目</b><a href="#how">模型流程</a><a href="#predictor">在线估计</a><a href="#limits">适用范围</a></div>
+      <div class="footer-column"><b>数据</b><span>UCI Machine Learning Repository</span><span>Seoul Bike Sharing Demand</span><span>8,760 条逐小时记录</span></div>
+      <div class="footer-column"><b>声明</b><span>课程作业演示</span><span>预测不构成运营承诺</span><span>第 15 组 · 2026</span></div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
