@@ -9,3 +9,4 @@ node_modules/
 dist/
 build/
 .codex-build/
+output/~$*
