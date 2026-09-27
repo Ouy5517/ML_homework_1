@@ -80,9 +80,9 @@ flowchart LR
 
 **模型形式：**
 
-\[
+$$
 \hat y = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p
-\]
+$$
 
 其中数值特征在进入 Ridge 前已标准化，类别特征已转换为 0/1 指示变量。
 
@@ -96,9 +96,9 @@ flowchart LR
 
 令 `n` 为训练样本数，`X` 为经过 Pipeline 处理后的特征矩阵，`w` 为回归系数，`b` 为截距。Ridge 最小化：
 
-\[
+$$
 \mathcal{L}(w,b)=\frac{1}{2n}\lVert y-Xw-b\mathbf{1}\rVert_2^2+\alpha\lVert w\rVert_2^2
-\]
+$$
 
 - 第一项是 **均方误差型平方损失**：预测偏差越大，惩罚按平方增长；
 - 第二项是 **L2 正则化项**：惩罚过大的系数，降低过拟合和共线性带来的不稳定；
@@ -106,10 +106,10 @@ flowchart LR
 
 使用梯度下降来理解时，系数部分的梯度为：
 
-\[
+$$
 \frac{\partial\mathcal{L}}{\partial w}
 =-\frac{1}{n}X^T(y-Xw-b\mathbf{1})+2\alpha w
-\]
+$$
 
 实际的 `scikit-learn` 会选择适合数据规模的数值求解器；这里的公式用于解释“平方损失把预测拉向真实值，L2 项把系数拉向 0”。
 
@@ -117,13 +117,13 @@ flowchart LR
 
 Ridge 训练优化的是“平方损失 + L2 正则化”，但报告时使用 MAE 和 R²：
 
-\[
+$$
 MAE=\frac{1}{n}\sum_{i=1}^{n}|y_i-\hat y_i|
-\]
+$$
 
-\[
+$$
 R^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}
-\]
+$$
 
 MAE 与业务单位相同，容易解释平均相差多少辆；R² 衡量模型相对于“直接预测测试集均值”的改进程度。两者都在未参与拟合的时间后 20% 测试集上计算。
 
