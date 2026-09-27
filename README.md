@@ -197,4 +197,4 @@ node --check app.js
 
 ## 课堂展示
 
-课堂 5 分钟展示提纲、模型公式、指标、系数解释和可能提问见 [`PRESENTATION.md`](PRESENTATION.md)。
+课堂 5 分钟展示提纲、模型公式、指标、系数解释和可能提问见 [`PRESENTATION.md`](PRESENTATION.md)。与网页视觉风格一致的课堂展示文件见 [`output/RideCast课堂展示-final.pptx`](output/RideCast课堂展示-final.pptx)。
