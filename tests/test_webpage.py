@@ -36,3 +36,11 @@ def test_motion_hooks_and_reduced_motion_support_exist():
     assert "IntersectionObserver" in js
     assert "animateNumber" in js
     assert "prefers-reduced-motion: reduce" in css
+
+
+def test_numeric_form_values_keep_blank_inputs_invalid():
+    js = (ROOT / "app.js").read_text(encoding="utf-8")
+
+    assert 'value === "" ? Number.NaN : Number(value)' in js
+    assert "if (!data.holiday" in js
+    assert "if (!data.functioning_day" in js

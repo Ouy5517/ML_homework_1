@@ -40,16 +40,18 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
 });
 
 function collectInput(formData) {
-  const date = new Date(`${formData.get("date")}T00:00:00`);
+  const toNumber = (value) => value === "" ? Number.NaN : Number(value);
+  const dateValue = formData.get("date");
+  const date = new Date(`${dateValue}T00:00:00`);
   return {
-    date: formData.get("date"),
-    hour: Number(formData.get("hour")),
+    date: dateValue,
+    hour: toNumber(formData.get("hour")),
     weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
     month: date.getMonth() + 1,
-    temperature: Number(formData.get("temperature")),
-    humidity: Number(formData.get("humidity")),
-    rainfall: Number(formData.get("rainfall")),
-    snowfall: Number(formData.get("snowfall")),
+    temperature: toNumber(formData.get("temperature")),
+    humidity: toNumber(formData.get("humidity")),
+    rainfall: toNumber(formData.get("rainfall")),
+    snowfall: toNumber(formData.get("snowfall")),
     holiday: formData.get("holiday"),
     functioning_day: formData.get("functioning_day"),
   };
@@ -62,6 +64,8 @@ function validate(data) {
   if (!Number.isFinite(data.humidity) || data.humidity < 0 || data.humidity > 100) return "湿度应在 0% 到 100% 之间。";
   if (!Number.isFinite(data.rainfall) || data.rainfall < 0 || data.rainfall > 50) return "降雨量应在 0–50 mm 之间。";
   if (!Number.isFinite(data.snowfall) || data.snowfall < 0 || data.snowfall > 10) return "降雪量应在 0–10 cm 之间。";
+  if (!data.holiday) return "请选择是否节假日。";
+  if (!data.functioning_day) return "请选择系统是否运行。";
   return "";
 }
 
