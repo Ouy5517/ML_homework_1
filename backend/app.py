@@ -29,7 +29,8 @@ def create_app(model=None) -> Flask:
 
     @app.get("/health")
     def health():
-        return jsonify({"status": "ok", "model_loaded": active_model is not None})
+        loaded = active_model is not None
+        return jsonify({"status": "ok" if loaded else "degraded", "model_loaded": loaded}), (200 if loaded else 503)
 
     @app.post("/predict")
     def predict():

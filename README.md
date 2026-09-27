@@ -8,6 +8,12 @@
 
 GitHub Pages 只托管静态前端，因此在线预览在 Flask 未连接时会明确显示“前端演示估计”。要使用保存的真实 Pipeline，请按下文在本地启动 Flask 后端；后端接口和训练产物都已包含在仓库中。
 
+## Render 云端部署
+
+仓库根目录的 `render.yaml` 定义了一个 Render Python Web Service。连接本仓库并创建 Blueprint 后，Render 在构建时安装依赖、重新训练并保存模型，再由 Gunicorn 提供网页和 `/predict` 接口。部署完成后，请使用 Render 给出的 `onrender.com` 地址访问完整应用；GitHub Pages 地址仍是静态预览。
+
+Render 免费实例可能在闲置后休眠，首次请求需要等待服务唤醒。健康检查地址为 `/health`。
+
 ## 项目结构
 
 ```text

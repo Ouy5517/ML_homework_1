@@ -31,3 +31,10 @@ def test_predict_endpoint_reports_invalid_payload():
     response = app.test_client().post("/predict", json={"date": "2024-01-05"})
     assert response.status_code == 400
     assert "error" in response.get_json()
+
+
+def test_health_check_fails_when_model_is_missing(monkeypatch, tmp_path):
+    monkeypatch.setenv("RIDECAST_MODEL_PATH", str(tmp_path / "missing.joblib"))
+    response = create_app().test_client().get("/health")
+    assert response.status_code == 503
+    assert response.get_json()["model_loaded"] is False
