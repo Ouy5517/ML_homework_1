@@ -6,10 +6,10 @@ RideCast 是机器学习课程作业一的可运行项目。用户输入日期�
 
 | 用途 | 地址 |
 |---|---|
-| Flask 全栈应用（真实模型预测） | [ridecast-ml-homework-1.onrender.com](https://ridecast-ml-homework-1.onrender.com) |
+| 手机/课堂展示入口（真实模型预测） | [打开 RideCast 网页](https://ridecast-ml-homework-1.onrender.com) |
 | GitHub Pages 静态预览 | [ouy5517.github.io/ML_homework_1](https://ouy5517.github.io/ML_homework_1/) |
 | GitHub 仓库 | [github.com/Ouy5517/ML_homework_1](https://github.com/Ouy5517/ML_homework_1) |
-| Render 控制台 | [服务面板](https://dashboard.render.com/web/srv-dasepe60tbcc73f3mlg0) |
+| Render 管理后台（需要登录） | [服务面板](https://dashboard.render.com/web/srv-dasepe60tbcc73f3mlg0) |
 
 Render 服务当前跟踪 `main` 分支并自动部署。免费实例闲置后可能休眠，第一次访问需要等待唤醒。GitHub Pages 只能托管静态文件，后端不可用时会显示“前端演示估计”；要验证真实模型，请访问 Render 地址。
 
