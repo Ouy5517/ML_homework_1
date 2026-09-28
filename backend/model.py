@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,7 @@ REQUIRED_PAYLOAD_FIELDS = [
     "holiday",
     "functioning_day",
 ]
+CANDIDATE_ALPHAS = (0.1, 1.0, 3.0, 10.0, 30.0)
 
 COLUMN_ALIASES = {
     "Date": "date",
@@ -118,7 +120,7 @@ def frame_from_payload(payload: dict[str, Any]) -> pd.DataFrame:
     return pd.DataFrame([row], columns=FEATURE_COLUMNS)
 
 
-def build_pipeline(include_temperature_square: bool = True) -> Pipeline:
+def build_pipeline(include_temperature_square: bool = True, alpha: float = 10.0) -> Pipeline:
     """Build the same preprocessing + regression pipeline for train and inference."""
     numeric = NUMERIC_COLUMNS if include_temperature_square else [column for column in NUMERIC_COLUMNS if column != "temperature_sq"]
     features = numeric + CATEGORICAL_COLUMNS
@@ -144,7 +146,7 @@ def build_pipeline(include_temperature_square: bool = True) -> Pipeline:
     return Pipeline(
         steps=[
             ("preprocessor", preprocessor),
-            ("regressor", Ridge(alpha=10.0)),
+            ("regressor", Ridge(alpha=alpha)),
         ]
     )
 
@@ -164,35 +166,92 @@ def extract_coefficients(pipeline: Pipeline) -> pd.DataFrame:
 
 
 def train_and_evaluate(frame: pd.DataFrame) -> dict[str, Any]:
-    """Use a chronological 80/20 split and return fitted model, metrics and predictions."""
+    """Select a model on the middle time block and evaluate once on the final block."""
+    frame = frame.sort_values(["date", "hour"]).reset_index(drop=True)
     if len(frame) < 10:
         raise ValueError("训练数据至少需要 10 条记录")
-    split_at = int(len(frame) * 0.8)
-    train = frame.iloc[:split_at]
-    test = frame.iloc[split_at:]
-    base_features = [column for column in FEATURE_COLUMNS if column != "temperature_sq"]
-    baseline = build_pipeline(include_temperature_square=False)
-    baseline.fit(train[base_features], train[TARGET_COLUMN])
-    baseline_predicted = np.maximum(0, baseline.predict(test[base_features]))
-    baseline_metrics = evaluate_predictions(test[TARGET_COLUMN], baseline_predicted)
-    # Fit the selected model with the temperature square term requested in the assignment.
-    pipeline = build_pipeline(include_temperature_square=True)
-    pipeline.fit(train[FEATURE_COLUMNS], train[TARGET_COLUMN])
-    predicted = np.maximum(0, pipeline.predict(test[FEATURE_COLUMNS]))
+    train_end = int(len(frame) * 0.64)
+    validation_end = int(len(frame) * 0.80)
+    if train_end < 2 or validation_end <= train_end or validation_end >= len(frame):
+        raise ValueError("训练、验证和测试数据均需要至少包含有效记录")
+
+    train = frame.iloc[:train_end]
+    validation = frame.iloc[train_end:validation_end]
+    train_validation = frame.iloc[:validation_end]
+    test = frame.iloc[validation_end:]
+
+    candidates = []
+    for include_temperature_square in (False, True):
+        features = [column for column in FEATURE_COLUMNS if include_temperature_square or column != "temperature_sq"]
+        model_name = "ridge_polynomial" if include_temperature_square else "ridge_linear"
+        for alpha in CANDIDATE_ALPHAS:
+            candidate = build_pipeline(include_temperature_square=include_temperature_square, alpha=alpha)
+            candidate.fit(train[features], train[TARGET_COLUMN])
+            validation_predicted = np.maximum(0, candidate.predict(validation[features]))
+            validation_metrics = evaluate_predictions(validation[TARGET_COLUMN], validation_predicted)
+            candidates.append(
+                {
+                    "model": model_name,
+                    "include_temperature_square": include_temperature_square,
+                    "alpha": alpha,
+                    **validation_metrics,
+                }
+            )
+
+    selected = min(candidates, key=lambda candidate: (candidate["mae"], -candidate["r2"]))
+    selected_features = [
+        column for column in FEATURE_COLUMNS if selected["include_temperature_square"] or column != "temperature_sq"
+    ]
+    pipeline = build_pipeline(
+        include_temperature_square=selected["include_temperature_square"],
+        alpha=selected["alpha"],
+    )
+    pipeline.fit(train_validation[selected_features], train_validation[TARGET_COLUMN])
+    predicted = np.maximum(0, pipeline.predict(test[selected_features]))
     metrics = evaluate_predictions(test[TARGET_COLUMN], predicted)
     predictions = test[["date", "hour", TARGET_COLUMN]].copy()
     predictions["prediction"] = predicted
-    return {"pipeline": pipeline, "metrics": metrics, "baseline_metrics": baseline_metrics, "predictions": predictions, "coefficients": extract_coefficients(pipeline), "split_at": split_at}
+    baseline = min(
+        (candidate for candidate in candidates if not candidate["include_temperature_square"]),
+        key=lambda candidate: (candidate["mae"], -candidate["r2"]),
+    )
+    return {
+        "pipeline": pipeline,
+        "metrics": metrics,
+        "validation_metrics": {"mae": selected["mae"], "r2": selected["r2"]},
+        "baseline_validation_metrics": {"mae": baseline["mae"], "r2": baseline["r2"]},
+        "predictions": predictions,
+        "coefficients": extract_coefficients(pipeline),
+        "candidates": candidates,
+        "selection": {
+            "source": "validation",
+            "selected_model": selected["model"],
+            "selected_alpha": selected["alpha"],
+            "include_temperature_square": selected["include_temperature_square"],
+        },
+        "split": {
+            "train_rows": len(train),
+            "validation_rows": len(validation),
+            "test_rows": len(test),
+        },
+    }
 
 
 def save_artifacts(result: dict[str, Any], model_path: Path, report_dir: Path) -> None:
     model_path.parent.mkdir(parents=True, exist_ok=True)
     report_dir.mkdir(parents=True, exist_ok=True)
     joblib.dump(result["pipeline"], model_path)
-    (report_dir / "model_metrics.json").write_text(
-        pd.Series({**result["metrics"], "baseline_mae": result["baseline_metrics"]["mae"], "baseline_r2": result["baseline_metrics"]["r2"], "test_rows": len(result["predictions"]), "split_at": result["split_at"]}).to_json(indent=2),
-        encoding="utf-8",
-    )
+    report = {
+        **result["metrics"],
+        "validation_mae": result["validation_metrics"]["mae"],
+        "validation_r2": result["validation_metrics"]["r2"],
+        "baseline_validation_mae": result["baseline_validation_metrics"]["mae"],
+        "baseline_validation_r2": result["baseline_validation_metrics"]["r2"],
+        **result["selection"],
+        **result["split"],
+        "candidates": result["candidates"],
+    }
+    (report_dir / "model_metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     result["coefficients"].to_csv(report_dir / "coefficients.csv", index=False)
     result["predictions"].to_csv(report_dir / "test_predictions.csv", index=False)
     predictions = result["predictions"].copy()

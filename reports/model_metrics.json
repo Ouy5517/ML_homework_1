@@ -1,8 +1,87 @@
 {
-  "mae":292.856444439,
-  "r2":0.5091674075,
-  "baseline_mae":303.2018584297,
-  "baseline_r2":0.4740295333,
-  "test_rows":1752.0,
-  "split_at":7008.0
+  "mae": 296.0346145365712,
+  "r2": 0.48467951812241494,
+  "validation_mae": 520.5801601128618,
+  "validation_r2": 0.034590009549630873,
+  "baseline_validation_mae": 520.5801601128618,
+  "baseline_validation_r2": 0.034590009549630873,
+  "source": "validation",
+  "selected_model": "ridge_linear",
+  "selected_alpha": 0.1,
+  "include_temperature_square": false,
+  "train_rows": 5606,
+  "validation_rows": 1402,
+  "test_rows": 1752,
+  "candidates": [
+    {
+      "model": "ridge_linear",
+      "include_temperature_square": false,
+      "alpha": 0.1,
+      "mae": 520.5801601128618,
+      "r2": 0.034590009549630873
+    },
+    {
+      "model": "ridge_linear",
+      "include_temperature_square": false,
+      "alpha": 1.0,
+      "mae": 520.5938515903762,
+      "r2": 0.03469582156569251
+    },
+    {
+      "model": "ridge_linear",
+      "include_temperature_square": false,
+      "alpha": 3.0,
+      "mae": 520.6150785494325,
+      "r2": 0.034892891908636314
+    },
+    {
+      "model": "ridge_linear",
+      "include_temperature_square": false,
+      "alpha": 10.0,
+      "mae": 520.7859073496209,
+      "r2": 0.03529943580090433
+    },
+    {
+      "model": "ridge_linear",
+      "include_temperature_square": false,
+      "alpha": 30.0,
+      "mae": 521.3937002992328,
+      "r2": 0.03537745862404451
+    },
+    {
+      "model": "ridge_polynomial",
+      "include_temperature_square": true,
+      "alpha": 0.1,
+      "mae": 577.4946750628575,
+      "r2": -0.2036903159491381
+    },
+    {
+      "model": "ridge_polynomial",
+      "include_temperature_square": true,
+      "alpha": 1.0,
+      "mae": 577.6944802102107,
+      "r2": -0.2043844623947353
+    },
+    {
+      "model": "ridge_polynomial",
+      "include_temperature_square": true,
+      "alpha": 3.0,
+      "mae": 578.1144310634626,
+      "r2": -0.205889040562252
+    },
+    {
+      "model": "ridge_polynomial",
+      "include_temperature_square": true,
+      "alpha": 10.0,
+      "mae": 579.6234055386515,
+      "r2": -0.21077371400273393
+    },
+    {
+      "model": "ridge_polynomial",
+      "include_temperature_square": true,
+      "alpha": 30.0,
+      "mae": 582.9935701975407,
+      "r2": -0.22216887208188618
+    }
+  ]
 }

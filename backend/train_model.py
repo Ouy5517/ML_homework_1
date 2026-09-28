@@ -68,6 +68,16 @@ def main() -> None:
     save_artifacts(result, args.model, args.reports)
     write_plot(result["predictions"], args.reports)
     print(f"训练完成: {len(frame)} 条记录")
+    split = result["split"]
+    selection = result["selection"]
+    print(
+        "时间切分: "
+        f"训练 {split['train_rows']} / 验证 {split['validation_rows']} / 测试 {split['test_rows']} 条"
+    )
+    print(
+        "验证集选择: "
+        f"{selection['selected_model']}, alpha={selection['selected_alpha']}"
+    )
     print(f"测试 MAE: {result['metrics']['mae']:.2f} bikes/hour")
     print(f"测试 R2: {result['metrics']['r2']:.3f}")
     print(f"模型: {args.model}")

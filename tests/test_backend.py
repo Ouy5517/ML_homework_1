@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from backend.model import FEATURE_COLUMNS, build_pipeline, frame_from_payload, prepare_training_frame
+from backend.model import FEATURE_COLUMNS, build_pipeline, frame_from_payload, prepare_training_frame, train_and_evaluate
 
 
 def sample_frame():
@@ -48,3 +48,35 @@ def test_pipeline_fits_with_same_feature_schema_used_by_prediction():
 def test_payload_rejects_missing_required_feature():
     with pytest.raises(ValueError, match="temperature"):
         frame_from_payload({"date": "2024-01-05", "hour": 9})
+
+
+def test_training_uses_train_validation_test_time_splits():
+    rows = []
+    start = pd.Timestamp("2024-01-01")
+    for index in range(25):
+        date = start + pd.Timedelta(hours=index)
+        rows.append(
+            {
+                "date": date.strftime("%Y-%m-%d"),
+                "hour": date.hour,
+                "temperature": 5.0 + index,
+                "humidity": 50,
+                "rainfall": 0.0,
+                "snowfall": 0.0,
+                "holiday": "No Holiday",
+                "functioning_day": "Yes",
+                "rented_bike_count": 100 + index * 10,
+            }
+        )
+
+    result = train_and_evaluate(prepare_training_frame(pd.DataFrame(rows)))
+
+    assert result["split"] == {
+        "train_rows": 16,
+        "validation_rows": 4,
+        "test_rows": 5,
+    }
+    assert result["selection"]["source"] == "validation"
+    assert result["selection"]["selected_alpha"] in {0.1, 1.0, 3.0, 10.0, 30.0}
+    assert result["candidates"]
+    assert all("test_metrics" not in candidate for candidate in result["candidates"])

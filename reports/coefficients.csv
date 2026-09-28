@@ -1,16 +1,15 @@
 feature,coefficient
-categorical__functioning_day_Yes,764.6865181391954
-numeric__temperature,456.9674513419054
-numeric__hour,190.9762195920132
-categorical__weekday_Sunday,-161.0459084618895
-categorical__holiday_No Holiday,158.8140084298697
-numeric__humidity,-130.0854601050363
-categorical__weekday_Saturday,-94.21858891784927
-categorical__weekday_Monday,-86.83555752047916
-numeric__temperature_sq,-79.1993989935322
-numeric__rainfall,-71.83988592003475
-categorical__weekday_Tuesday,-45.11524143907065
-categorical__weekday_Thursday,-39.140553953288105
-categorical__weekday_Wednesday,-27.073662790796877
-numeric__month,12.860217509315017
-numeric__snowfall,4.533108570769282
+categorical__functioning_day_Yes,839.9006482666596
+numeric__temperature,386.35383677876246
+numeric__hour,191.99494392383446
+categorical__weekday_Sunday,-163.78955105275014
+categorical__holiday_No Holiday,156.9166302600524
+numeric__humidity,-118.98625816631608
+categorical__weekday_Saturday,-97.32510529371328
+categorical__weekday_Monday,-91.4438167685373
+numeric__rainfall,-71.85166917650793
+categorical__weekday_Tuesday,-50.850714390524494
+categorical__weekday_Thursday,-47.13211478949375
+categorical__weekday_Wednesday,-35.096043321287006
+numeric__month,6.292275708973341
+numeric__snowfall,0.6629046715229789

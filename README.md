@@ -41,13 +41,15 @@ python -m http.server 8765
 flowchart LR
     A[UCI Seoul Bike CSV] --> B[清洗与日期解析]
     B --> C[派生 weekday / month / temperature²]
-    C --> D[训练集拟合 Pipeline]
-    D --> E[中位数/众数填补]
-    E --> F[标准化与 one-hot]
-    F --> G[Ridge 回归]
-    G --> H[joblib 模型]
-    H --> I[Flask /predict]
-    I --> J[网页结果]
+    C --> D[按时间 64% / 16% / 20% 切分]
+    D --> E[验证集选择特征与 alpha]
+    E --> F[前 80% 重训 Pipeline]
+    F --> G[中位数/众数填补]
+    G --> H[标准化与 one-hot]
+    H --> I[Ridge 回归]
+    I --> J[joblib 模型]
+    J --> K[Flask /predict]
+    K --> L[网页结果]
 ```
 
 ## 数据与特征
@@ -61,9 +63,9 @@ flowchart LR
 - 时间：`date`、`hour`，以及由日期派生的 `weekday` 和 `month`；
 - 天气：`temperature`（°C）、`humidity`（%）、`rainfall`（mm）、`snowfall`（cm）；
 - 状态：`holiday`、`functioning_day`；
-- 派生项：`temperature²`，用于表达温度与需求之间的非线性。
+- 候选派生项：`temperature²`，用于检验温度与需求之间的非线性；是否采用由验证集决定。
 
-训练集按时间顺序取前 80%，测试集取后 20%，避免未来记录泄漏到训练过程。数值字段用训练集的中位数填补并标准化，类别字段用训练集众数填补后做 one-hot；所有变换只在训练集拟合。
+数据按时间顺序分为前 64% 训练集、中间 16% 验证集和最后 20% 测试集。验证集只用于选择是否加入 `temperature²`、Ridge 的 `alpha` 和候选模型；确定方案后，用前 80%（训练集加验证集）重新拟合，最后 20% 只用于一次最终评价。数值字段用拟合数据的中位数填补并标准化，类别字段用拟合数据的众数填补后做 one-hot；所有变换只在对应训练数据上拟合。
 
 ## 训练与评估
 
@@ -74,18 +76,20 @@ python -m backend.train_model
 训练完成后会生成：
 
 - `models/ridecast_pipeline.joblib`：预处理和 Ridge 回归组成的完整 Pipeline；
-- `reports/model_metrics.json`：测试集 MAE、R² 和不含温度二次项的基线；
+- `reports/model_metrics.json`：最终测试集 MAE、R²、验证集选择结果和 64%/16%/20% 切分信息；
 - `reports/coefficients.csv`：模型系数；
 - `reports/test_predictions.csv`：测试集真实值、预测值和误差分析数据；
 - `reports/largest_error.json`：绝对误差最大的测试样本；
 - `reports/actual_vs_predicted.png`：实际值—预测值散点图。
 
-当前训练结果：
+当前训练结果（最终测试集只评价一次）：
 
 | 模型 | MAE（辆/小时） | R² |
 |---|---:|---:|
-| 不含温度二次项的线性基线 | 303.20 | 0.474 |
-| RideCast Ridge + `temperature²` | **292.86** | **0.509** |
+| 验证集选择：Ridge 线性特征，alpha=0.1 | — | — |
+| 最终测试：Ridge 线性特征，alpha=0.1 | **296.03** | **0.485** |
+
+本次训练使用 5,606 条记录训练、1,402 条记录验证、1,752 条记录测试。验证集 MAE 为 520.58；该数值用于模型选择，不作为最终泛化性能报告。
 
 ## API
 
@@ -126,7 +130,7 @@ Content-Type: application/json
 成功返回：
 
 ```json
-{"prediction": 1095}
+{"prediction": 1057}
 ```
 
 PowerShell 调用线上接口：
