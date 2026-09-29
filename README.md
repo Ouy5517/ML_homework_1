@@ -80,7 +80,10 @@ python -m backend.train_model
 - `reports/coefficients.csv`：模型系数；
 - `reports/test_predictions.csv`：测试集真实值、预测值和误差分析数据；
 - `reports/largest_error.json`：绝对误差最大的测试样本；
-- `reports/actual_vs_predicted.png`：实际值—预测值散点图。
+- `reports/actual_vs_predicted.png`：实际值—预测值散点图；
+- `reports/prediction_curve.png`：固定其他输入后的小时条件预测曲线；
+- `reports/prediction_heatmap.png`：小时 × 温度条件预测热力图；
+- `reports/evaluation_dashboard.png`：最终测试集实际值—预测值散点图与残差图。
 
 当前训练结果（最终测试集只评价一次）：
 
@@ -90,6 +93,23 @@ python -m backend.train_model
 | 最终测试：Ridge 线性特征，alpha=0.1 | **296.03** | **0.485** |
 
 本次训练使用 5,606 条记录训练、1,402 条记录验证、1,752 条记录测试。验证集 MAE 为 520.58；该数值用于模型选择，不作为最终泛化性能报告。
+
+## 模型函数
+
+验证集选择了不含 `temperature²` 的 Ridge 线性模型，正则化参数为 `alpha=0.1`。数值特征先标准化，类别特征采用 one-hot 编码。模型在变换后特征空间中的函数为：
+
+```text
+ŷ_raw = -220.13
+       + 191.99 z_hour + 6.29 z_month + 386.35 z_temperature
+       - 118.99 z_humidity - 71.85 z_rainfall + 0.66 z_snowfall
+       - 91.44 I(Monday) - 97.33 I(Saturday) - 163.79 I(Sunday)
+       - 47.13 I(Thursday) - 50.85 I(Tuesday) - 35.10 I(Wednesday)
+       + 156.92 I(No Holiday) + 839.90 I(Functioning Day=Yes)
+
+ŷ = max(0, ŷ_raw)
+```
+
+其中 `z_feature = (feature - 训练/验证均值) / 训练/验证标准差`；`I(condition)` 为指示变量，条件成立时取 1，否则取 0。基准类别为星期五、`Holiday` 和 `Functioning Day=No`。由于数值特征已标准化，系数表示该特征增加一个标准差时对预测值的影响，而不是原始单位下的斜率。完整系数见 [`reports/coefficients.csv`](reports/coefficients.csv)。
 
 ## API
 
@@ -173,14 +193,15 @@ backend/
   model.py          数据清洗、特征构造、Pipeline、评估与保存
   train_model.py    下载数据、训练模型、生成指标和图表
   app.py            Flask /predict 与 /health 接口
+scripts/
+  generate_evaluation_charts.py  生成预测曲线、预测热力图和评估面板
 data/
   README.md         数据来源、字段、单位与清洗规则
 models/              训练后的 Pipeline
-reports/             指标、系数、测试预测和散点图
+reports/             指标、系数、测试预测和模型评估图表
 index.html           前端表单与结果面板
 app.js               表单校验、请求 /predict、结果动画
 styles.css           页面样式
-PRESENTATION.md      课堂 5 分钟展示提纲和讲稿
 requirements.txt     Python 依赖
 render.yaml          Render Web Service 配置
 ```
@@ -199,6 +220,12 @@ node --check app.js
 
 模型学习的是首尔历史运营条件，适合课堂演示和相近条件下的小时级估计，不能直接代表其他城市、新站点或长期变化后的需求。大型活动、道路施工、站点库存、公共交通故障等变量没有纳入；极端天气属于训练范围外的外推。当前预测值用于估计，不应直接作为运营承诺。
 
-## 课堂展示
+## 课堂展示与图表
 
-课堂 5 分钟展示提纲、模型公式、指标、系数解释和可能提问见 [`PRESENTATION.md`](PRESENTATION.md)。与网页视觉风格一致的课堂展示文件见 [`output/RideCast课堂展示-final.pptx`](output/RideCast课堂展示-final.pptx)。
+生成评估图表：
+
+```powershell
+python scripts/generate_evaluation_charts.py
+```
+
+最新课堂展示文件为 [`output/RideCast课堂展示-64-16-20-charts-v5.pptx`](output/RideCast课堂展示-64-16-20-charts-v5.pptx)。第 5 页包含测试集散点图和残差图，第 6 页包含预测曲线与小时 × 温度预测面，第 9 页说明完整模型函数和变量含义。
